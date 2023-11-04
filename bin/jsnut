@@ -1,0 +1,190 @@
+#!/usr/bin/env node
+const messages = require("../messages");
+const { spawnSync } = require("child_process");
+const fs = require("fs");
+const { sep, resolve: _to_absolute } = require("path");
+const { resolveCliArgs } = require("resolve-cli-args");
+
+let args = resolveCliArgs(process.argv.slice(2));
+
+__MAIN__();
+function __MAIN__()
+{
+    const NEED_BUILD = RESOLVE_SUBCOMMAND();
+    if (NEED_BUILD)
+    {
+        const args_is_valid = CHECK_ARGS();
+        if (args_is_valid === undefined) return;
+        else if (args_is_valid === false) CREATE_BUILD_DIR();
+
+        BUILD_GYP();
+        START_BUILD();
+        FIX_VCXPROJ_PATHS();
+        MOVE_FILES();
+        OPTIONAL_DELETE();
+        console.log(messages.success);
+    }
+}
+
+//#region PROCEDURES
+function RESOLVE_SUBCOMMAND()
+{
+    if (process.argv[2] == "help" || process.argv[2] == "-h")
+        console.log(messages.help);
+    else if (process.argv[2] == "build")
+        return true;
+    else console.log(messages.unknown_option);
+}
+function CHECK_ARGS()
+{
+    if (!args.args["-f"] || args.args["-f"]?.length == 0)
+        return void console.log(messages.unknown_src_path);
+    for (const file of args.args["-f"])
+        if (!fs.existsSync(file))
+            return void console.log(messages.unknown_src_path);
+    if (!args.args["-o"])
+        return void console.log(messages.unknown_out_path);
+    if (!fs.existsSync(args.args["-o"][0]))
+        return false;
+    else return true;
+}
+function CREATE_BUILD_DIR()
+{
+    args.args["-o"] = [_resolve_dir_path(args.args["-o"][0])];
+    const absolute = _makepath(process.cwd(), args.args["-o"][0]);
+    let dir;
+    try {
+        dir = fs.readdirSync(absolute);
+    } catch (err) {
+        dir = [];
+    }
+    if (dir.length == 0)
+    {
+        fs.mkdirSync(absolute, { recursive: true });
+    }
+    return absolute;
+}
+function BUILD_GYP()
+{
+    fs.writeFileSync(_makepath(_getdir(args.args["-f"][0]), "./binding.gyp"), `{
+        "variables": {
+            "module_name%": "${args.args["-n"]?.[0] || _getfilename(args.args["-f"][0])}",
+            "module_path%": "${args.args["-f"][0]}"
+        },
+        "targets": [{
+            "target_name": "${args.args["-n"]?.[0] || _getfilename(args.args["-f"][0])}",
+            "sources": [ "${args.args["-f"].map(_getfile).join('", "')}" ],
+            "include_dirs": [ "<!(node -e \\\"require('${args.args["-l"] ?? "nan"}').include\\\")" ]
+        }]
+    }`);
+    console.log(messages.binding_file_created);
+}
+function START_BUILD()
+{
+    spawnSync(`cd "${_getdir(args.args["-f"][0])}"; npx node-gyp-build`, { stdio: "inherit", shell: "bash" });
+}
+function FIX_VCXPROJ_PATHS()
+{
+    const vcxproj_path = _makepath(
+        _getdir(_to_absolute(args.args["-f"][0])),
+        `./build/${args.args["-n"]?.[0] || _getfilename(args.args["-f"][0])}.vcxproj`
+    );
+    let file = fs.readFileSync(vcxproj_path).toString();
+
+    const escaped_sep = sep == '\\' ? sep.repeat(2) : sep;
+    const expression = "node_modules" + escaped_sep + "nan";
+    let a = file.search(new RegExp(`;(${sep}..\\${sep})+${expression}`));
+    let b = file.search(new RegExp(`${expression}`));
+    const path = (file.slice(a, b) + expression.replace(escaped_sep, sep)).slice(1);
+
+    file = file.replaceAll(
+        path,
+        _makepath(_makepath(process.cwd(), _getdir(args.args["-f"][0])) + sep + "build", path.replaceAll(sep, '/'))
+    );
+    for (const src_filepath of args.args["-f"])
+    {
+        file = file.replaceAll(
+            new RegExp(`((\\.{1,2})+${escaped_sep})+${_getfile(src_filepath)}`, 'g'),
+            _makepath(process.cwd(), src_filepath)
+        );
+    }
+
+    fs.writeFileSync(vcxproj_path, file);
+    console.log(messages.fixed_vcxproj);
+}
+function MOVE_FILES()
+{
+    const basepath = `${_getdir(args.args["-f"][0])}${sep}build`;
+    const filename = args.args["-n"]?.[0] || _getfilename(args.args["-f"][0]);
+    const outdir = _to_absolute(args.args["-o"][0]);
+    spawnSync(`
+        cd "${basepath}"
+        mv -f "./${filename}.vcxproj" -t "${outdir}"
+        mv "./binding.sln" "${outdir}${sep}${filename}.sln"
+        mv -f "./Release/${filename}.node" -t "${outdir}"
+        `, { stdio: "inherit", shell: "bash" }
+    );
+}
+function OPTIONAL_DELETE()
+{
+    const to_delete = ("--clean" in args.args)
+        ? (console.log(messages.clean_mode) ?? "--clean")
+        : ("--onlymod" in args.args)
+            ? (console.log(messages.onlymod_mode) ?? "--onlymod")
+            : undefined;
+    if (!to_delete) return;
+    const basepath = `${_getdir(args.args["-f"][0])}${sep}build`;
+    const filename = _getfilename(args.args["-f"][0]);
+    const outdir = _to_absolute(args.args["-o"][0]);
+    if (outdir.split(sep).includes("build"))
+        console.log(messages.outdir_is_build);
+    spawnSync(`
+        cd "${basepath}"
+        cd ..
+        rm -f "./binding.gyp"
+        rm -f -r ./build
+        ${to_delete == "--onlymod" ? `
+            cd "${outdir}"
+            rm -f "./${filename}.vcxproj"
+            rm -f "./${filename}.sln"
+        ` : ''}
+        `, { stdio: "inherit", shell: "bash" }
+    );
+}
+//#endregion
+
+//#region LIBRARIES
+function _makepath(dirname, filename) {
+    if (filename.match(/(\/|\\)$/gi)?.length)
+        filename = filename.slice(0, -1);
+    const upto = filename.match(/\.\.\//g)?.length ?? 0;
+    return (dirname
+        .split(sep)
+        .slice(0, (0 - upto) || undefined)
+        .join(sep)
+        + sep
+        + filename
+            .replaceAll('../', '')
+            .replaceAll('./', ''))
+        .replaceAll(/\\\.\\|\/\.\//gi, sep)
+        .replaceAll(/\.\.$/gi, sep)
+        .replaceAll(/\/|\\/gi, sep);
+}
+function _getdir(path)
+{
+    return path.split(/\/|\\/g).slice(0, -1).join(sep);
+}
+function _getfile(path)
+{
+    return path.split(/\/|\\/g).at(-1);
+}
+function _getfilename(file)
+{
+    return _getfile(file).split('.').slice(0, -1).join('.')
+}
+function _resolve_dir_path(path)
+{
+    path = path.replaceAll(/\/|\\/g, sep);
+    return path.endsWith(sep) ? path.slice(0, -1) : path;
+}
+//#endregion

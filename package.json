@@ -1,0 +1,34 @@
+{
+  "scripts": {
+    "jsnut": "./bin/jsnut \"$@\""
+  },
+  "devDependencies": {
+    "@types/node": "^20.8.9"
+  },
+  "dependencies": {
+    "ansi-colors": "^4.1.3",
+    "nan": "^2.18.0",
+    "node-gyp-build": "^4.6.1",
+    "resolve-cli-args": "^1.1.0"
+  },
+  "bin": {
+    "jsnut": "bin/jsnut"
+  },
+  "name": "@dtkdtk/jsnut",
+  "description": "What is \"JSNut\"? JSNut is a NodeJS NUTive module build tool`",
+  "version": "1.0.1",
+  "main": "./bin/jsnut",
+  "directories": {
+    "test": "test"
+  },
+  "keywords": [
+    "native",
+    "c++",
+    "cc",
+    "cpp",
+    "nan",
+    "node-addon"
+  ],
+  "author": "dtkdtk0",
+  "license": "MIT"
+}
