@@ -4,6 +4,11 @@ What is "JSNut"? JSNut is a NodeJS NUTive module build tool. It is very easy to 
 # API
 - *command* `jsnut`
 
+# Features
+- Auto-generation of `package.json` and `binding.gyp` files
+- Configurable output directory and output file name
+- [`sort_includes`](#about-the-includes-sorting) tool [experimental]
+
 # Usage
 Type `npx @dtkdtk/jsnut help` to get command help.
 
@@ -73,3 +78,22 @@ Result: (file tree)
 - - `module.node` (first specified source file name)
 - - `module.sln`
 - - `module.vcxproj`
+
+# About the '#include's sorting
+> [!WARNING]\
+> This feature is experimental and uncompleted (and so unperfect). Use at your own risk
+
+To sort, use the `jsnut sort_includes <...src_dirs>` command
+
+`#include` directives are sorted as follows:
+1. Your project headers (`"ui/app.h"`)
+2. Extern libraries (must contain `/` or `.`) (`<node.h>`)
+> [!NOTE]\
+> Standard C headers are into this category
+3. Your libraries (must be in the "lib" directory) (`"lib/api.h"`)
+4. Standart C++ headers (without `.h` extension) (`<iostream>`)
+There is an empty line between categories.
+The order was borrowed from Google, but with some changes.
+
+> [!WARNING]\
+> The tool will remove any not-multiline comments in the '#include's block. Please put them rather (or later) than '#include' directives

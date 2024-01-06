@@ -5,6 +5,9 @@ exports.unknown_option = `${ansiColors.red(`JSNut: Unknown command or options. T
 exports.help = `${ansiColors.cyan("JSNut :: Tool for building native NodeJS modules")}\n${ansiColors.bgCyan("COMMAND HELP:")}:
 \n${ansiColors.yellow(`jsnut ${ansiColors.greenBright("help")}
 +`)} Get help for commands
+\n${ansiColors.yellow(`jsnut ${ansiColors.greenBright("sort_includes <...code_dirs>")}
++`)} (experimental) Sort '#include's in the specified directory (see README.md for more information)
+  See 
 \n${ansiColors.yellow(`jsnut ${ansiColors.greenBright("build")}
 | ${ansiColors.greenBright(`-f`)} ${ansiColors.white("<src_file>")} :: ${ansiColors.blackBright("Source file (.cc/.cpp/...) path. CAN BE USED MULTIPLE TIMES")}
 | ${ansiColors.greenBright(`-o`)} ${ansiColors.white(`<out_dir>`)} :: ${ansiColors.blackBright("Build directory (e.g. ./dist/ or ../build/)")}
@@ -29,3 +32,13 @@ exports.clean_mode = ansiColors.cyan("JSNut :: Running the clean mode...");
 exports.onlymod_mode = ansiColors.cyan("JSNut :: Running the onlymod mode...");
 
 exports.success = ansiColors.cyan("JSNut :: Successful build");
+
+
+
+//TOOLS:
+//sort_includes
+exports.sort_includes__proccessing = ansiColors.cyan("JSNut :: Sorting the includes...");
+
+exports.sort_includes__success = ansiColors.cyan("JSNut :: Includes successfully sorted");
+
+exports.sort_includes__comments_warning = file_path => ansiColors.yellowBright("JSNut :: Warning: comments may be cut (because they are in the '#include's block). File:\n") + ansiColors.yellowBright("| ") + ansiColors.blackBright(file_path);

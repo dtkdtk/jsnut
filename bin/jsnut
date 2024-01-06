@@ -1,14 +1,17 @@
 #!/usr/bin/env node
-const messages = require("../messages");
 const { spawnSync } = require("child_process");
 const fs = require("fs");
 const { sep, resolve: _to_absolute } = require("path");
 const { resolveCliArgs } = require("resolve-cli-args");
+const { sort_includes } = require("../sort_includes");
+const messages = require("../messages");
 
 let args = resolveCliArgs(process.argv.slice(2));
+main();
 
-__MAIN__();
-function __MAIN__()
+
+
+function main()
 {
     const NEED_BUILD = RESOLVE_SUBCOMMAND();
     if (NEED_BUILD)
@@ -33,6 +36,8 @@ function RESOLVE_SUBCOMMAND()
         console.log(messages.help);
     else if (process.argv[2] == "build")
         return true;
+    else if (process.argv[2] == "sort_includes")
+        sort_includes(args.unnamedValues.slice(1));
     else console.log(messages.unknown_option);
 }
 function CHECK_ARGS()
