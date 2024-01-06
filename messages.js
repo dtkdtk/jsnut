@@ -11,7 +11,8 @@ exports.help = `${ansiColors.cyan("JSNut :: Tool for building native NodeJS modu
 | ${ansiColors.greenBright(`-n`)} ${ansiColors.white("<module_name>")} :: ${ansiColors.blackBright("(OPTIONAL) Name of the compiled file. If not specified, the name of the first specified source code file will be used")}
 | ${ansiColors.greenBright(`-l`)} ${ansiColors.white("<package_name>")} :: ${ansiColors.blackBright(`(OPTIONAL) Native api (npm module) that will be required in the binding.gyp file ('nan' or 'node-addon-api'). Default is 'nan'`)}
 | ${ansiColors.greenBright(`--clean`)} or ${ansiColors.greenBright(`--onlymod`)} :: ${ansiColors.blackBright("(OPTIONAL) If '--clean' - delete 'build/' directory, else if '--onlymod' - delete 'build/' dir and .vcxproj & .sln files")}
-+`)} Build NodeJS native library from '.cc' file`;
++`)} Build NodeJS native library from '.cc' file
+\n${ansiColors.redBright("Important:")} ${ansiColors.white("please read README.md#Guide for the important information.")}`;
 
 exports.unknown_src_path = ansiColors.red(`JSNut :: Error: source file path does not specified or it is invalid`);
 

@@ -10,6 +10,9 @@ Type `npx @dtkdtk/jsnut help` to get command help.
 Type `npx -- @dtkdtk/jsnut build <-f filename> <-o outdir> [-n modname] [--clean|--onlymod]` to compile C++ file
 
 # Example
+> [!IMPORTANT]\
+> `using namespace STH;` in any file causes compilation errors. Please use STH::... instead.
+
 `src/module.cc`
 ```cpp
 #include <nan.h>
