@@ -19,7 +19,7 @@ exports.unknown_out_path = ansiColors.red(`JSNut :: Error: outdir path does not 
 
 exports.outdir_is_build = ansiColors.yellowBright(`JSNut :: Warning: do not specify the 'build' folder as 'out_dir'. All compiled files can be deleted along with the 'build' directory (if it is in the source code folder)`);
 
-exports.binding_file_created = ansiColors.cyan("JSNut :: Binding file created successfully");
+exports.binding_and_pkgjson_files_created = ansiColors.cyan("JSNut :: binding.gyp & package.json files created successfully");
 
 exports.fixed_vcxproj = ansiColors.cyan("JSNut :: Successful patch of .vcxproj file");
 

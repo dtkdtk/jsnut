@@ -17,7 +17,7 @@ function __MAIN__()
         if (args_is_valid === undefined) return;
         else if (args_is_valid === false) CREATE_BUILD_DIR();
 
-        BUILD_GYP();
+        BUILD_GYP_AND_PKGJSON();
         START_BUILD();
         FIX_VCXPROJ_PATHS();
         MOVE_FILES();
@@ -64,20 +64,27 @@ function CREATE_BUILD_DIR()
     }
     return absolute;
 }
-function BUILD_GYP()
+function BUILD_GYP_AND_PKGJSON()
 {
     fs.writeFileSync(_makepath(_getdir(args.args["-f"][0]), "./binding.gyp"), `{
-        "variables": {
-            "module_name%": "${args.args["-n"]?.[0] || _getfilename(args.args["-f"][0])}",
-            "module_path%": "${args.args["-f"][0]}"
-        },
-        "targets": [{
-            "target_name": "${args.args["-n"]?.[0] || _getfilename(args.args["-f"][0])}",
-            "sources": [ "${args.args["-f"].map(_getfile).join('", "')}" ],
-            "include_dirs": [ "<!(node -e \\\"require('${args.args["-l"] ?? "nan"}').include\\\")" ]
-        }]
-    }`);
-    console.log(messages.binding_file_created);
+    "variables": {
+        "module_name%": "${args.args["-n"]?.[0] || _getfilename(args.args["-f"][0])}",
+        "module_path%": "${args.args["-f"][0]}"
+    },
+    "targets": [{
+        "target_name": "${args.args["-n"]?.[0] || _getfilename(args.args["-f"][0])}",
+        "sources": [ "${args.args["-f"].map(_getfile).join('", "')}" ],
+        "include_dirs": [ "<!(node -e \\\"require('${args.args["-l"] ?? "nan"}').include\\\")" ]
+    }]
+}`);
+
+    fs.writeFileSync(_makepath(_getdir(args.args["-f"][0]), "./package.json"), `{
+    "gypfile": true,
+    "dependencies": {
+        "nan": "latest"
+    }
+}`);
+    console.log(messages.binding_and_pkgjson_files_created);
 }
 function START_BUILD()
 {
@@ -121,6 +128,8 @@ function MOVE_FILES()
         cd "${basepath}"
         mv -f "./${filename}.vcxproj" -t "${outdir}"
         mv "./binding.sln" "${outdir}${sep}${filename}.sln"
+        mv -f "../package.json" "${outdir}${sep}package.json"
+        mv -f "../binding.gyp" "${outdir}${sep}binding.gyp"
         mv -f "./Release/${filename}.node" -t "${outdir}"
         `, { stdio: "inherit", shell: "bash" }
     );
@@ -141,7 +150,6 @@ function OPTIONAL_DELETE()
     spawnSync(`
         cd "${basepath}"
         cd ..
-        rm -f "./binding.gyp"
         rm -f -r ./build
         ${to_delete == "--onlymod" ? `
             cd "${outdir}"

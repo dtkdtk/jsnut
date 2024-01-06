@@ -7,9 +7,8 @@
 void native_fragments(const Nan::FunctionCallbackInfo<v8::Value>& info)
 {
 	std::cout	<< "nothing and "
-			<< otherfile_function()
-			<< std::endl;
-	__call_index++;
+				<< otherfile_function()
+				<< std::endl;
 }
 
 void MODULE_INIT(v8::Local<v8::Object> exports)
