@@ -25,8 +25,8 @@ function get_code_files_path(code_dirs)
 {
 	let files = [];
 	code_dirs.forEach(code_dir =>
-		files = files.concat(readdirSync(_makepath(__dirname, code_dir), { recursive: true })
-			.map(path => _makepath(_makepath(__dirname, code_dir), path))
+		files = files.concat(readdirSync(_makepath(process.cwd(), code_dir), { recursive: true })
+			.map(path => _makepath(_makepath(process.cwd(), code_dir), path))
 			.filter(path => path.endsWith('.hh') || path.endsWith('.cc') || path.endsWith('.hpp') || path.endsWith('.cpp') || path.endsWith('.h') || path.endsWith('.c'))
 		)
 	);
